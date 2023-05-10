@@ -60,40 +60,40 @@ class WifiReceiver(private var wifiManager: WifiManager):BroadcastReceiver() {
         context.unregisterReceiver(wifiReceiver)
         return wifiList
     }
-    @RequiresApi(Build.VERSION_CODES.Q)
-    fun connectToWifi(networkSSID: String, networkPasskey: String, context: Context) {
-        val wifiConfig = WifiNetworkSuggestion.Builder()
-            .setSsid(networkSSID)
-            .setWpa2Passphrase(networkPasskey)
-            .build()
-
-        val wifiManager = context.getSystemService(Context.WIFI_SERVICE) as WifiManager
-        val suggestionsList = listOf(wifiConfig)
-        val status = wifiManager.addNetworkSuggestions(suggestionsList)
-
-        if (status != WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS) {
-            // Обработка ошибки
-            return
-        }
-
-        val networkCallback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                super.onAvailable(network)
-                // Подключение выполнено успешно
-            }
-
-            override fun onUnavailable() {
-                super.onUnavailable()
-                // Обработка ошибки
-            }
-        }
-
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val requestBuilder = NetworkRequest.Builder()
-            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-            .removeCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-
-        connectivityManager.requestNetwork(requestBuilder.build(), networkCallback)
-    }
+//    @RequiresApi(Build.VERSION_CODES.Q)
+//    fun connectToWifi(wifiList:MutableList<ScanResults>, passkeys: String, context: Context) {
+//        for (wifi in wifiList) {
+//            val passkey = passkeys[wifi.SSID]
+//            val wifiConfig = WifiNetworkSuggestion.Builder()
+//                .setSsid(wifi.SSID)
+//                .setWpa2Passphrase(passkey.toString())
+//                .build()
+//
+//            val suggestionsList = listOf(wifiConfig)
+//            val status = wifiManager.addNetworkSuggestions(suggestionsList)
+//
+//            if (status != WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS) {
+//                return
+//            }
+//
+//            val networkCallback = object : ConnectivityManager.NetworkCallback() {
+//                override fun onAvailable(network: Network) {
+//                    super.onAvailable(network)
+//                }
+//
+//                override fun onUnavailable() {
+//                    super.onUnavailable()
+//                }
+//            }
+//
+//            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+//            val requestBuilder = NetworkRequest.Builder()
+//                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+//                .removeCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+//
+//            connectivityManager.requestNetwork(requestBuilder.build(), networkCallback)
+//        }
+//
+//    }
 
 }

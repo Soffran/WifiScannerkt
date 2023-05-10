@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Wifi Scanner</string>
+    <string name="scan">scan</string>
+    <string name="unlock">Unlock</string>
+    <string name="export">EXPORT</string>
+    <string name="save">SAVE</string>
+</resources>

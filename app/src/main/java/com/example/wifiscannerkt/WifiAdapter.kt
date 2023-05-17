@@ -21,7 +21,7 @@ class WifiAdapter(private val wifiList: MutableList<ScanResults>) :
         holder.bssidTextView.text = currentItem.Bssid
         holder.frequencyTextView.text = currentItem.Frequency.toString()
         holder.levelTextView.text = currentItem.Level.toString()
-        holder.isOpenTextView.text = if (currentItem.isOpen)   "Secured" else "Open"
+        holder.isOpenTextView.text = if (currentItem.isOpen)     "Secured" else "Open"
     }
 
     override fun getItemCount() = wifiList.size

@@ -1,7 +1,10 @@
+@file:Suppress("DEPRECATION")
+
 package com.example.wifiscannerkt
 
 import android.content.Context
 import android.content.Intent
+import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
@@ -15,16 +18,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.gson.Gson
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.io.IOException
 
 class MainActivity : AppCompatActivity() {
     private lateinit var wifiAdapter: WifiAdapter
     private lateinit var recyclerView: RecyclerView
     private var json: String? = null
+    private var passwords: Array<String> = arrayOf()
     private val REQUEST_CODE_SAVE = 77
     private var wifiList:MutableList<ScanResults> = arrayListOf()
 
@@ -36,6 +37,7 @@ class MainActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.wifiRecycler)
         recyclerView.layoutManager = LinearLayoutManager(this)
         wifiAdapter = WifiAdapter(arrayListOf())
+        passwords = resources.getStringArray(R.array.wifi_passwords)
         val btnScan = findViewById<FloatingActionButton>(R.id.scanBtn)
         val wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
 
@@ -65,13 +67,15 @@ class MainActivity : AppCompatActivity() {
         when(item.itemId){
             R.id.save ->{
                 saveWifiListToExternalStorage()
-                
             }
             R.id.export ->{
                 exportWifiList()
             }
             R.id.unlock ->{
-                Toast.makeText(this, "В разработке", Toast.LENGTH_SHORT).show()
+                CoroutineScope(Dispatchers.IO).launch{
+                    unlockWifiList(wifiList, passwords,applicationContext)
+            }
+
             }
 
         }
@@ -82,7 +86,6 @@ class MainActivity : AppCompatActivity() {
         json = gson.toJson(wifiList)
 
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-        @Suppress("DEPRECATION")
         startActivityForResult(intent, REQUEST_CODE_SAVE)
 
     }
@@ -95,6 +98,56 @@ class MainActivity : AppCompatActivity() {
         intent.putExtra(Intent.EXTRA_TEXT, json)
         startActivity(Intent.createChooser(intent, "Share Wi-Fi networks"))
     }
+
+    private fun connectToWifiWithKey(ssid: String, key: String): Boolean {
+        val wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+        val wifiConfig = WifiConfiguration()
+        wifiConfig.SSID = String.format("\"%s\"", ssid)
+        wifiConfig.preSharedKey = String.format("\"%s\"", key)
+        val networkId = wifiManager.addNetwork(wifiConfig)
+        return if (networkId != -1) {
+            wifiManager.enableNetwork(networkId, true)
+            wifiManager.reconnect()
+            true
+        } else {
+            false
+        }
+    }
+
+    private fun unlockWifiList( wifiList: MutableList<ScanResults>, passwords: Array<String>, context: Context ) {
+
+        val scope = CoroutineScope(Dispatchers.IO)
+        val wifiJobs = wifiList.flatMap { wifi ->
+            passwords.map { password ->
+                scope.async {
+                    try {
+                        val connected = connectToWifiWithKey( wifi.Ssid, password)
+                        if (connected) {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(
+                                    context,
+                                    "Подключено к сети: ${wifi.Ssid}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    } catch (e: Exception) {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(
+                                context,
+                                "Не удалось подключиться к сети: ${wifi.Ssid}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+
+
 
 
 
